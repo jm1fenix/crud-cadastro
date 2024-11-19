@@ -1,138 +1,166 @@
-const form = document.getElementById('itemForm');
-const itemList = document.getElementById('itemList');
-let editingItemId = null; // Para controlar qual item está sendo editado
+// Referências aos elementos do HTML
+const form = document.getElementById('itemForm'); // Pegamos o formulário pelo ID para manipular seus dados.
+const itemList = document.getElementById('itemList'); // Pegamos o elemento onde a lista de itens será exibida.
+let editingItemId = null; // Variável para armazenar o ID do item que estamos editando. Inicialmente é null (nenhum item editado).
 
-// Função para carregar os itens do Local Storage
+// Função para carregar e exibir os itens armazenados no Local Storage
 function loadItems() {
-  // Recupera a lista de itens armazenados no Local Storage (se existir)
+  // Recupera os itens do Local Storage e converte para um array, ou cria um array vazio caso não haja dados
   const items = JSON.parse(localStorage.getItem('items')) || [];
   
-  itemList.innerHTML = ''; // Limpa a lista de itens na interface
+  // Limpa o conteúdo atual da lista de itens na página
+  itemList.innerHTML = '';
 
+  // Para cada item na lista de itens recuperada do Local Storage
   items.forEach(item => {
+    // Cria um novo item de lista (<li>) para exibir
     const li = document.createElement('li');
+    // Define o texto do item (nome + descrição)
     li.innerText = `${item.name}: ${item.description}`;
 
-    // Adiciona os botões de Editar e Excluir
+    // Cria o botão de "Editar"
     const editButton = document.createElement('button');
-    editButton.innerText = 'Editar';
-    editButton.onclick = () => editItem(item);
+    editButton.innerText = 'Editar'; // Define o texto do botão
+    editButton.onclick = () => editItem(item); // Chama a função editItem quando o botão é clicado
 
+    // Cria o botão de "Excluir"
     const deleteButton = document.createElement('button');
-    deleteButton.innerText = 'Excluir';
-    deleteButton.onclick = () => deleteItem(item);
+    deleteButton.innerText = 'Excluir'; // Define o texto do botão
+    deleteButton.onclick = () => deleteItem(item); // Chama a função deleteItem quando o botão é clicado
 
+    // Adiciona os botões de edição e exclusão ao item da lista
     li.appendChild(editButton);
     li.appendChild(deleteButton);
 
+    // Adiciona o item à lista de itens na interface
     itemList.appendChild(li);
   });
 }
 
-// Função para adicionar ou atualizar um item
+// Função que é chamada ao enviar o formulário
 function addItem(event) {
-  event.preventDefault(); // Impede o comportamento padrão do formulário
+  event.preventDefault(); // Impede o envio padrão do formulário (evita o recarregamento da página)
 
-  const name = document.getElementById('name').value;
-  const description = document.getElementById('description').value;
+  // Captura os valores inseridos no formulário
+  const name = document.getElementById('name').value; // Nome do item
+  const description = document.getElementById('description').value; // Descrição do item
 
+  // Verifica se ambos os campos foram preenchidos
   if (!name || !description) {
-    alert('Por favor, preencha todos os campos!');
-    return;
+    alert('Por favor, preencha todos os campos!'); // Se não, exibe um alerta
+    return; // Interrompe a execução da função
   }
 
+  // Cria o objeto com os dados do novo item
   const newItem = { name, description };
 
-  let items = JSON.parse(localStorage.getItem('items')) || []; // Pega os itens do Local Storage ou cria uma lista vazia
+  // Recupera os itens armazenados no Local Storage, ou um array vazio caso não existam
+  let items = JSON.parse(localStorage.getItem('items')) || [];
 
   if (editingItemId) {
-    // Se estamos editando, vamos substituir o item existente
-    items = items.map(item => 
+    // Se estamos editando um item, mapeamos os itens e atualizamos o item com o ID igual a editingItemId
+    items = items.map(item =>
       item.id === editingItemId ? { ...item, name, description } : item
     );
-    editingItemId = null; // Reseta o ID após a edição
+    editingItemId = null; // Limpa o ID de edição após a atualização
   } else {
-    // Se não estamos editando, adicionamos um novo item
-    newItem.id = Date.now(); // Adiciona um ID único baseado no timestamp
+    // Se estamos criando um novo item, geramos um ID único baseado no timestamp
+    newItem.id = Date.now();
+    // Adiciona o novo item à lista de itens
     items.push(newItem);
   }
 
-  // Salva a lista de itens no Local Storage
+  // Salva a lista de itens atualizada no Local Storage
   localStorage.setItem('items', JSON.stringify(items));
-
+  // Exibe uma mensagem de sucesso, dependendo se o item foi adicionado ou atualizado
   alert(editingItemId ? 'Item atualizado!' : 'Item adicionado!');
-  loadItems(); // Recarrega os itens
-  resetForm(); // Reseta o formulário
+  // Recarrega os itens na interface
+  loadItems();
+  // Reseta o formulário
+  resetForm();
 }
 
-// Função para editar um item
+// Função chamada quando o botão "Editar" de um item é clicado
 function editItem(item) {
-  document.getElementById('name').value = item.name;
+  // Preenche os campos do formulário com os dados do item que estamos editando
+  document.getElementById('name').value = item.name; 
   document.getElementById('description').value = item.description;
-  editingItemId = item.id; // Define o ID do item a ser editado
+  // Define o ID do item sendo editado
+  editingItemId = item.id;
 
-  // Altera o texto do botão de "Adicionar" para "Editar"
+  // Modifica o texto do botão para "Editar Item"
   const submitButton = document.querySelector('form button');
-  submitButton.textContent = 'Editar Item';
-  submitButton.setAttribute('onclick', 'updateItem(event)'); // Alteramos a função de clique para a de atualização
+  submitButton.textContent = 'Editar Item'; 
+  // Modifica o evento de clique para que chame a função updateItem ao invés de addItem
+  submitButton.setAttribute('onclick', 'updateItem(event)');
 }
 
-// Função para atualizar um item (ao invés de adicionar)
+// Função chamada quando o botão "Editar Item" é clicado
 function updateItem(event) {
-  event.preventDefault(); // Impede o comportamento padrão do formulário
+  event.preventDefault(); // Impede o comportamento padrão de envio do formulário
 
+  // Captura os novos valores para nome e descrição
   const name = document.getElementById('name').value;
   const description = document.getElementById('description').value;
 
+  // Valida se ambos os campos foram preenchidos
   if (!name || !description) {
-    alert('Por favor, preencha todos os campos!');
-    return;
+    alert('Por favor, preencha todos os campos!'); // Exibe um alerta se algum campo estiver vazio
+    return; // Interrompe a execução da função
   }
 
+  // Recupera os itens do Local Storage
   let items = JSON.parse(localStorage.getItem('items')) || [];
 
-  // Atualiza o item com o id correspondente
+  // Mapeia a lista de itens, atualizando o item com o ID igual ao editingItemId
   items = items.map(item =>
     item.id === editingItemId ? { ...item, name, description } : item
   );
 
-  // Salva novamente os itens no Local Storage
+  // Salva a lista de itens atualizada no Local Storage
   localStorage.setItem('items', JSON.stringify(items));
-
+  // Exibe uma mensagem de sucesso
   alert('Item atualizado!');
-  loadItems(); // Recarrega a lista de itens
-  resetForm(); // Reseta o formulário
+  // Recarrega os itens na interface
+  loadItems();
+  // Reseta o formulário
+  resetForm();
 }
 
-// Função para excluir um item
+// Função chamada quando o botão "Excluir" de um item é clicado
 function deleteItem(item) {
+  // Pergunta ao usuário se ele tem certeza de que deseja excluir o item
   if (confirm('Tem certeza que deseja excluir este item?')) {
-    let items = JSON.parse(localStorage.getItem('items')) || []; // Pega os itens do Local Storage
-
-    // Filtra o item a ser excluído
+    // Recupera a lista de itens
+    let items = JSON.parse(localStorage.getItem('items')) || [];
+    // Filtra o item a ser excluído, removendo o item com o ID igual ao do item a ser excluído
     items = items.filter(i => i.id !== item.id);
-
-    // Atualiza o Local Storage
+    // Salva a lista de itens atualizada (sem o item excluído) no Local Storage
     localStorage.setItem('items', JSON.stringify(items));
-
+    // Exibe uma mensagem informando que o item foi excluído
     alert('Item excluído!');
-    loadItems(); // Recarrega a lista de itens
+    // Recarrega a lista de itens na interface
+    loadItems();
   }
 }
 
-// Função para resetar o formulário
+// Função chamada para limpar os campos de entrada do formulário
 function resetForm() {
+  // Limpa os valores dos campos de nome e descrição
   document.getElementById('name').value = '';
   document.getElementById('description').value = '';
-  editingItemId = null; // Reseta o ID do item sendo editado
+  // Reseta a variável de edição
+  editingItemId = null;
 
+  // Restaura o texto do botão para "Adicionar Item"
   const submitButton = document.querySelector('form button');
-  submitButton.textContent = 'Adicionar Item'; // Restaura o texto do botão para "Adicionar"
-  submitButton.setAttribute('onclick', 'addItem(event)'); // Reseta a função de clique para "Adicionar"
+  submitButton.textContent = 'Adicionar Item';
+  // Reseta a função chamada pelo botão para "adicionar item" novamente
+  submitButton.setAttribute('onclick', 'addItem(event)');
 }
 
-// Ao carregar a página, carregue os itens automaticamente do Local Storage
-window.onload = loadItems;
+// Esta função é chamada automaticamente quando a página é carregada
+window.onload = loadItems; // Chama a função loadItems para carregar e exibir os itens do Local Storage
 
-// Adiciona o evento de envio do formulário
+// Adiciona o evento de envio ao formulário, chamando a função addItem
 form.addEventListener('submit', addItem);
